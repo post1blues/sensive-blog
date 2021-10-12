@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from blog.models import Comment, Post, Tag
+from django.http import Http404
 
 
 def serialize_tag(tag):
@@ -19,13 +20,13 @@ def serialize_post(post):
         'published_at': post.published_at,
         'slug': post.slug,
         'tags': [serialize_tag(tag) for tag in post.tags.popular()],
-        'first_tag_title': post.tags.first().title,
+        'first_tag_title': post.tags.all()[0].title,
     }
 
 
 def index(request):
 
-    popular_tags = Tag.objects.prefetch_related('posts').popular()
+    popular_tags = Tag.objects.popular()
 
     most_popular_posts = Post.objects.popular() \
                              .prefetch_related('tags') \
@@ -50,7 +51,10 @@ def index(request):
 
 
 def post_detail(request, slug):
-    post = Post.objects.prefetch_related('author').get(slug=slug)
+    try:
+        post = Post.objects.prefetch_related('author').get(slug=slug)
+    except Post.DoesNotExist:
+        return Http404()
     comments = Comment.objects.filter(post=post).prefetch_related('author')
     serialized_comments = []
     for comment in comments:

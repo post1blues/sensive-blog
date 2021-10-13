@@ -30,11 +30,11 @@ def index(request):
 
     most_popular_posts = Post.objects.popular() \
                              .prefetch_related('tags') \
-                             .prefetch_related('author')[:5] \
+                             .select_related('author')[:5] \
                              .fetch_with_comments_count()
 
     most_fresh_posts = Post.objects.prefetch_related('tags') \
-                                   .prefetch_related('author') \
+                                   .select_related('author') \
                                    .order_by('-published_at')[:5] \
                                    .fetch_with_comments_count()
 
@@ -52,10 +52,10 @@ def index(request):
 
 def post_detail(request, slug):
     try:
-        post = Post.objects.prefetch_related('author').get(slug=slug)
+        post = Post.objects.select_related('author').get(slug=slug)
     except Post.DoesNotExist:
         return Http404()
-    comments = Comment.objects.filter(post=post).prefetch_related('author')
+    comments = Comment.objects.filter(post=post).select_related('author')
     serialized_comments = []
     for comment in comments:
         serialized_comments.append({
@@ -81,7 +81,7 @@ def post_detail(request, slug):
     most_popular_tags = Tag.objects.popular()[:5]
 
     most_popular_posts = Post.objects.popular() \
-                             .prefetch_related('author')[:5] \
+                             .select_related('author')[:5] \
                              .fetch_with_comments_count()
 
     context = {
@@ -100,10 +100,10 @@ def tag_filter(request, tag_title):
     most_popular_tags = Tag.objects.popular()[:5]
 
     most_popular_posts = Post.objects.popular() \
-                             .prefetch_related('author')[:5] \
+                             .select_related('author')[:5] \
                              .fetch_with_comments_count()
 
-    related_posts = tag.posts.all().prefetch_related('author')[:20].fetch_with_comments_count()
+    related_posts = tag.posts.all().select_related('author')[:20].fetch_with_comments_count()
 
     context = {
         'tag': tag.title,
